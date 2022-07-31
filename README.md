@@ -6,3 +6,11 @@ ___
 ```bash
 docker-compose -p kernelpanic_blog --env-file ../.env up -d
 ```
+
+## Configuration
+
+Add __UUID__ extension for postgres
+
+```sql
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+```
