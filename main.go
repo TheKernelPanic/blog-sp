@@ -6,9 +6,11 @@ import (
 	"blog-sp-kernelpanic/model"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/monitor"
 	"github.com/joho/godotenv"
 	"os"
+	"time"
 )
 
 func main() {
@@ -35,12 +37,29 @@ func main() {
 
 	app := fiber.New()
 
-	app.Get("/", controller.DefaultController)
-	app.Get("/post/create", controller.CreatePostController)
-	app.Get("/metrics", monitor.New(monitor.Config{Title: "Metrics Page"}))
-
-	err = app.Listen(fmt.Sprintf("%s:%s", "0.0.0.0", os.Getenv("APPLICATION_PORT")))
+	outputLoggerFile, err := os.OpenFile(
+		fmt.Sprintf("%s/app.log", os.Getenv("LOGGER_OUPUT_DIRECTORY")),
+		os.O_RDWR|os.O_CREATE|os.O_APPEND,
+		0664)
 	if err != nil {
 		panic(err)
 	}
+	defer outputLoggerFile.Close()
+
+	app.Use(logger.New(logger.Config{
+		Format:     "${time}: ${ip} - ${status} - ${method} ${path}\n",
+		TimeFormat: time.RFC3339,
+		TimeZone:   "UTC",
+		Output:     outputLoggerFile,
+	}))
+
+	app.Get("/", controller.DefaultController)
+	app.Post("/post/create", controller.CreatePostController)
+	app.Get("/metrics", monitor.New(monitor.Config{Title: "Metrics Page"}))
+
+	err = app.Listen(fmt.Sprintf("%s:%s", os.Getenv("APPLICATION_HOST"), os.Getenv("APPLICATION_PORT")))
+	if err != nil {
+		panic(err)
+	}
+
 }
