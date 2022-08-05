@@ -30,6 +30,7 @@ func main() {
 	database.DatabaseConnection.AutoMigrate(
 		&model.Post{},
 		&model.Section{},
+		&model.HtmlSection{},
 		&model.Tag{})
 
 	app := fiber.New()
