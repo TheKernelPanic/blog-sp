@@ -38,7 +38,7 @@ func main() {
 	app := fiber.New()
 
 	outputLoggerFile, err := os.OpenFile(
-		fmt.Sprintf("%s/app.log", os.Getenv("LOGGER_OUPUT_DIRECTORY")),
+		fmt.Sprintf("%s/app.log", os.Getenv("LOGGER_OUTPUT_DIRECTORY")),
 		os.O_RDWR|os.O_CREATE|os.O_APPEND,
 		0664)
 	if err != nil {
@@ -61,5 +61,4 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
 }
