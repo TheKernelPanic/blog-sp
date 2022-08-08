@@ -14,3 +14,9 @@ Add __UUID__ extension for postgres
 ```sql
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 ```
+
+## Run Tests
+
+```bash
+go test -v ./tests
+```
