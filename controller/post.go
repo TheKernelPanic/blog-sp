@@ -26,8 +26,24 @@ func CreatePostController(context *fiber.Ctx) error {
 	for _, sectionDto := range postDto.Sections {
 		switch sectionType := sectionDto.(type) {
 		case *dto.HtmlSection:
-			sectionsModel = append(sectionsModel, &model.HtmlSection{Content: sectionType.Content, Section: model.Section{Mimetype: sectionType.Mimetype, Sort: sectionType.Sort}})
+			sectionsModel = append(
+				sectionsModel,
+				&model.HtmlSection{
+					Content: sectionType.Content,
+					Section: model.Section{
+						Mimetype: sectionType.Mimetype,
+						Sort:     sectionType.Sort}})
 		}
+	}
+
+	// Check existing slug
+	result := database.DatabaseConnection.First(&model.Post{}, "slug = ?", postModel.Slug)
+	if result.RowsAffected == 1 {
+		err = context.SendStatus(409)
+		if err != nil {
+			panic(err)
+		}
+		return context.Send(nil)
 	}
 
 	transaction := database.DatabaseConnection.Begin()
