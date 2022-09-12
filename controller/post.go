@@ -83,7 +83,8 @@ func ListingGetController(context *fiber.Ctx) error {
 	var posts []model.Post
 	database.DatabaseConnection.Model(&model.Post{}).Find(&posts)
 
-	encoded, _ := json.Marshal(dto.MapList(posts))
+	postsDto := dto.MapList(posts)
+	encoded, _ := json.Marshal(&postsDto)
 
 	return context.Type("json", "utf-8").Send(encoded)
 }

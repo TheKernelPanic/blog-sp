@@ -20,6 +20,8 @@ func main() {
 		panic(err)
 	}
 
+	controller.UploadsDirectory = os.Getenv("UPLOADS_DIRECTORY")
+
 	database.InitDatabaseConnection(
 		os.Getenv("DATABASE_HOST"),
 		os.Getenv("DATABASE_USER"),
@@ -33,6 +35,7 @@ func main() {
 		&model.Post{},
 		&model.Section{},
 		&model.HtmlSection{},
+		&model.FileUploaded{},
 		&model.Tag{})
 
 	app := fiber.New()
@@ -59,6 +62,9 @@ func main() {
 	postGroup.Post("/create", controller.CreatePostController)
 	postGroup.Get("/listing", controller.ListingGetController)
 	postGroup.Get("/:slug", controller.SlugGetController)
+
+	filesGroup := app.Group("/files")
+	filesGroup.Post("/image/upload", controller.UploadImagePostController)
 
 	app.Get("/metrics", monitor.New(monitor.Config{Title: "Metrics Page"}))
 
