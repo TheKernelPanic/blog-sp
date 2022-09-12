@@ -6,26 +6,28 @@ type SectionType interface {
 }
 
 type Post struct {
-	ID          string    `gorm:"primary_key;type:varchar(36);default:uuid_generate_v4()" json:"id"`
-	Sections    []Section `gorm:"foreignKey:PostID;references:ID" json:"sections"`
-	Description string    `gorm:"type:varchar(255);not null" json:"description"`
-	Slug        string    `gorm:"type:varchar(255);not null;index:idx_post_slug,unique" json:"slug"`
-	*TimestampFields
-}
-
-type Section struct {
-	ID          string `gorm:"primary_key;type:varchar(36);default:uuid_generate_v4()" json:"id"`
-	SectionID   int
-	SectionType string
-	PostID      string `gorm:"type:varchar(36)" json:"post_id"`
-	Mimetype    string `gorm:"type:varchar(255);not null" json:"mimetype"`
-	Sort        int    `gorm:"type:integer;not null"`
+	ID            string          `gorm:"primary_key;type:varchar(36);default:uuid_generate_v4()" json:"id"`
+	Sections      []Section       `gorm:"foreignKey:PostID;references:ID" json:"sections"`
+	Description   string          `gorm:"type:varchar(255);not null" json:"description"`
+	Slug          string          `gorm:"type:varchar(255);not null;index:idx_post_slug,unique" json:"slug"`
+	Timestampable TimestampFields `gorm:"embedded"`
 }
 
 type HtmlSection struct {
-	ID      int
+	ID      string  `gorm:"primary_key;type:varchar(36)" json:"id"`
 	Content string  `gorm:"type:text" json:"content"`
-	Section Section `gorm:"polymorphic:Section;polymorphicValue:html"`
+	Section Section `gorm:"-"`
+}
+
+type Section struct {
+	ID            string          `gorm:"primary_key;type:varchar(36);default:uuid_generate_v4()" json:"id"`
+	Type          string          `gorm:"type:varchar(16)" json:"type"`
+	PostID        string          `gorm:"type:varchar(36)" json:"post_id"`
+	Post          Post            `gorm:"references:ID"`
+	Mimetype      string          `gorm:"type:varchar(255);not null" json:"mimetype"`
+	Sort          int             `gorm:"type:integer;not null"`
+	SectionType   SectionType     `gorm:"-"`
+	Timestampable TimestampFields `gorm:"embedded"`
 }
 
 func (htmlSection *HtmlSection) GetSection() Section {

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 )
 
 type SectionType interface {
@@ -15,25 +16,27 @@ type Section struct {
 }
 
 type HtmlSection struct {
-	*Section
+	Section
 	Content string `json:"content"`
 }
 
 type Post struct {
 	Description string            `json:"description"`
 	Slug        string            `json:"slug"`
-	Sections    []SectionType     `json:"_"`
-	RawSections []json.RawMessage `json:"sections"`
+	Sections    []SectionType     `json:"-"`
+	RawSections []json.RawMessage `json:"sections,omitempty"`
+	CreatedAt   time.Time         `json:"created_at"`
 }
 
-func (post *Post) UnmarshalJSON(b []byte) error {
+func (p *Post) UnmarshalJSON(b []byte) error {
+
 	type postDto Post
 
-	err := json.Unmarshal(b, (*postDto)(post))
+	err := json.Unmarshal(b, (*postDto)(p))
 	if err != nil {
 		panic(err)
 	}
-	for _, raw := range post.RawSections {
+	for _, raw := range p.RawSections {
 		var section Section
 		err = json.Unmarshal(raw, &section)
 		if err != nil {
@@ -51,7 +54,23 @@ func (post *Post) UnmarshalJSON(b []byte) error {
 		if err != nil {
 			panic(err)
 		}
-		post.Sections = append(post.Sections, sectionType)
+		p.Sections = append(p.Sections, sectionType)
 	}
 	return nil
+}
+
+func (p *Post) MarshalJSON() ([]byte, error) {
+
+	type post Post
+
+	if p.Sections != nil {
+		for _, section := range p.Sections {
+			encoded, err := json.Marshal(section)
+			if err != nil {
+				return nil, err
+			}
+			p.RawSections = append(p.RawSections, encoded)
+		}
+	}
+	return json.Marshal((*post)(p))
 }

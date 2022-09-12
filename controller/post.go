@@ -54,10 +54,12 @@ func CreatePostController(context *fiber.Ctx) error {
 
 		section = sectionModel.GetSection()
 		section.PostID = postModel.ID
-		sectionModel.SetSection(section)
+
 		switch sectionType := sectionModel.(type) {
 		case *model.HtmlSection:
-			sectionType.SetSection(section)
+			section.Type = "html"
+			transaction.Create(&section)
+			sectionType.ID = section.ID
 			transaction.Create(&sectionType)
 		default:
 			transaction.Rollback()
