@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"blog-sp-kernelpanic/model"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -45,7 +46,7 @@ func (p *Post) UnmarshalJSON(b []byte) error {
 
 		var sectionType SectionType
 		switch section.Mimetype {
-		case "text/html":
+		case model.MimeTypeHtml:
 			sectionType = &HtmlSection{}
 		default:
 			return errors.New(fmt.Sprintf("Unsupported mimetype %s", section.Mimetype))
@@ -73,4 +74,42 @@ func (p *Post) MarshalJSON() ([]byte, error) {
 		}
 	}
 	return json.Marshal((*post)(p))
+}
+
+func Map(postModel model.Post) Post {
+
+	var post Post
+	post.Slug = postModel.Slug
+	post.Description = postModel.Description
+	post.CreatedAt = postModel.Timestampable.CreatedAt
+
+	var sectionModel model.Section
+
+	if len(postModel.Sections) == 0 {
+		return post
+	}
+	for _, sectionModel = range postModel.Sections {
+		switch sectionType := sectionModel.SectionType.(type) {
+		case *model.HtmlSection:
+			section := HtmlSection{
+				Content: sectionType.Content,
+				Section: Section{
+					Mimetype: sectionType.Section.Mimetype,
+					Sort:     sectionType.Section.Sort}}
+
+			post.Sections = append(post.Sections, section)
+		default:
+			// TODO: Handle
+		}
+	}
+	return post
+}
+
+func MapList(postModelList []model.Post) []Post {
+	var postList []Post
+
+	for _, postModel := range postModelList {
+		postList = append(postList, Map(postModel))
+	}
+	return postList
 }

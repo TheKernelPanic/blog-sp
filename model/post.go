@@ -1,5 +1,9 @@
 package model
 
+const (
+	MimeTypeHtml = "text/html"
+)
+
 type SectionType interface {
 	GetSection() Section
 	SetSection(section Section)
@@ -21,7 +25,6 @@ type HtmlSection struct {
 
 type Section struct {
 	ID            string          `gorm:"primary_key;type:varchar(36);default:uuid_generate_v4()" json:"id"`
-	Type          string          `gorm:"type:varchar(16)" json:"type"`
 	PostID        string          `gorm:"type:varchar(36)" json:"post_id"`
 	Post          Post            `gorm:"references:ID"`
 	Mimetype      string          `gorm:"type:varchar(255);not null" json:"mimetype"`

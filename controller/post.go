@@ -57,7 +57,6 @@ func CreatePostController(context *fiber.Ctx) error {
 
 		switch sectionType := sectionModel.(type) {
 		case *model.HtmlSection:
-			section.Type = "html"
 			transaction.Create(&section)
 			sectionType.ID = section.ID
 			transaction.Create(&sectionType)
@@ -77,4 +76,57 @@ func CreatePostController(context *fiber.Ctx) error {
 		panic(err)
 	}
 	return context.Send(nil)
+}
+
+func ListingGetController(context *fiber.Ctx) error {
+
+	var posts []model.Post
+	database.DatabaseConnection.Model(&model.Post{}).Find(&posts)
+
+	encoded, _ := json.Marshal(dto.MapList(posts))
+
+	return context.Type("json", "utf-8").Send(encoded)
+}
+
+func SlugGetController(context *fiber.Ctx) error {
+
+	var post model.Post
+	result := database.DatabaseConnection.Model(&model.Post{}).Preload("Sections").First(&post, "slug = ?", context.Params("slug"))
+
+	if result.RowsAffected == 0 {
+		err := context.SendStatus(404)
+		if err != nil {
+			panic(err)
+		}
+		return context.Send(nil)
+	}
+
+	for index, section := range post.Sections {
+
+		var sectionType model.SectionType
+
+		switch section.Mimetype {
+		case model.MimeTypeHtml:
+			var htmlSectionType *model.HtmlSection
+			result = database.DatabaseConnection.Model(&model.HtmlSection{}).First(&htmlSectionType, "id = ?", section.ID)
+			if result.RowsAffected == 0 {
+				err := context.SendStatus(404)
+				if err != nil {
+					panic(err)
+				}
+				return context.Send(nil)
+			}
+			sectionType = htmlSectionType
+			break
+		default:
+			// TODO: Handle
+		}
+		sectionType.SetSection(section)
+		post.Sections[index].SectionType = sectionType
+	}
+	postDto := dto.Map(post)
+
+	encoded, _ := json.Marshal(&postDto)
+
+	return context.Type("json", "utf-8").Send(encoded)
 }
