@@ -54,9 +54,12 @@ func main() {
 	}))
 
 	app.Get("/", controller.DefaultController)
-	app.Post("/post/create", controller.CreatePostController)
-	app.Get("/post/listing", controller.ListingGetController)
-	app.Get("/post/:slug", controller.SlugGetController)
+
+	postGroup := app.Group("/post")
+	postGroup.Post("/create", controller.CreatePostController)
+	postGroup.Get("/listing", controller.ListingGetController)
+	postGroup.Get("/:slug", controller.SlugGetController)
+
 	app.Get("/metrics", monitor.New(monitor.Config{Title: "Metrics Page"}))
 
 	err = app.Listen(fmt.Sprintf("%s:%s", os.Getenv("APPLICATION_HOST"), os.Getenv("APPLICATION_PORT")))
