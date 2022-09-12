@@ -2,7 +2,7 @@ version: '3.7'
 
 services:
   application_server:
-    image: kernelpanic_log:latest
+    image: kernelpanic_blog:latest
     build:
       context: .
       args:
