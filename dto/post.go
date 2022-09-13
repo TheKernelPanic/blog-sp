@@ -76,7 +76,7 @@ func (p *Post) MarshalJSON() ([]byte, error) {
 	return json.Marshal((*post)(p))
 }
 
-func Map(postModel model.Post) Post {
+func PostModelMapper(postModel model.Post) Post {
 
 	var post Post
 	post.Slug = postModel.Slug
@@ -105,11 +105,11 @@ func Map(postModel model.Post) Post {
 	return post
 }
 
-func MapList(postModelList []model.Post) []Post {
+func PostModelMapperList(postModelList []model.Post) []Post {
 	var postList []Post
 
 	for _, postModel := range postModelList {
-		postList = append(postList, Map(postModel))
+		postList = append(postList, PostModelMapper(postModel))
 	}
 	return postList
 }

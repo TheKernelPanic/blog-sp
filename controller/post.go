@@ -83,7 +83,7 @@ func ListingGetController(context *fiber.Ctx) error {
 	var posts []model.Post
 	database.DatabaseConnection.Model(&model.Post{}).Find(&posts)
 
-	postsDto := dto.MapList(posts)
+	postsDto := dto.PostModelMapperList(posts)
 	encoded, _ := json.Marshal(&postsDto)
 
 	return context.Type("json", "utf-8").Send(encoded)
@@ -125,7 +125,7 @@ func SlugGetController(context *fiber.Ctx) error {
 		sectionType.SetSection(section)
 		post.Sections[index].SectionType = sectionType
 	}
-	postDto := dto.Map(post)
+	postDto := dto.PostModelMapper(post)
 
 	encoded, _ := json.Marshal(&postDto)
 
