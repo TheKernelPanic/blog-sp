@@ -2,8 +2,10 @@ package controller
 
 import (
 	"blog-sp-kernelpanic/database"
+	"blog-sp-kernelpanic/dto"
 	"blog-sp-kernelpanic/model"
 	"blog-sp-kernelpanic/utils"
+	"encoding/json"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 )
@@ -46,7 +48,7 @@ func UploadImagePostController(context *fiber.Ctx) error {
 		return context.Send(nil)
 	}
 
-	filenameGenerated := utils.FilenameGenerator(mimetype)
+	filenameGenerated := utils.FilenameGenerator(mimetype, files[0].Size)
 
 	fileUploaded := model.FileUploaded{Filename: filenameGenerated, Type: "image"}
 	transaction := database.DatabaseConnection.Begin()
@@ -57,12 +59,16 @@ func UploadImagePostController(context *fiber.Ctx) error {
 		transaction.Rollback()
 		return err
 	}
-	transaction.Commit()
+	err = transaction.Commit().Error
+	if err != nil {
+
+	}
 	err = context.SendStatus(201)
 	if err != nil {
 		panic(err)
 	}
-	return context.Send(nil)
+	encoded, _ := json.Marshal(dto.FileUploadedModelMapper(&fileUploaded))
+	return context.Type("json", "utf-8").Send(encoded)
 }
 
 func (mimetypes mimetypesList) checkMimetypeIsValid(mimetype string) bool {

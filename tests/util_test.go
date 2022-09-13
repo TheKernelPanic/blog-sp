@@ -8,5 +8,5 @@ import (
 
 func TestFilenameGenerator(t *testing.T) {
 
-	assert.Len(t, utils.FilenameGenerator("image/jpeg"), 36)
+	assert.Len(t, utils.FilenameGenerator("image/jpeg", 10000000), 36)
 }

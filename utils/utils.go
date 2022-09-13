@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"math/rand"
+	"time"
 )
 
 var charactersForRandom = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
@@ -12,7 +13,8 @@ var extensionMimetypeMap = map[string]string{
 	"image/gif":  "gif",
 }
 
-func FilenameGenerator(mimetype string) string {
+func FilenameGenerator(mimetype string, seed int64) string {
+	rand.Seed(seed * time.Now().UnixNano())
 	b := make([]rune, 32)
 	for i := range b {
 		b[i] = charactersForRandom[rand.Intn(len(charactersForRandom))]
