@@ -36,7 +36,7 @@ func main() {
 		&model.Section{},
 		&model.HtmlSection{},
 		&model.FileUploaded{},
-		&model.Tag{})
+		&model.Category{})
 
 	app := fiber.New()
 
