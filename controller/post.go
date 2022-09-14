@@ -84,8 +84,10 @@ func ListingGetController(context *fiber.Ctx) error {
 	database.DatabaseConnection.Model(&model.Post{}).Find(&posts)
 
 	postsDto := dto.PostModelMapperList(posts)
+	if postsDto == nil {
+		postsDto = make([]dto.Post, 0)
+	}
 	encoded, _ := json.Marshal(&postsDto)
-
 	return context.Type("json", "utf-8").Send(encoded)
 }
 
