@@ -4,10 +4,14 @@ import (
 	"blog-sp-kernelpanic/controller"
 	"blog-sp-kernelpanic/database"
 	"blog-sp-kernelpanic/model"
+	"crypto/rand"
+	"crypto/rsa"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/monitor"
+	jwtware "github.com/gofiber/jwt/v3"
 	"github.com/joho/godotenv"
 	"os"
 	"time"
@@ -16,6 +20,10 @@ import (
 func main() {
 
 	err := godotenv.Load()
+	if err != nil {
+		panic(err)
+	}
+	controller.JWTPrivateKey, err = rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		panic(err)
 	}
@@ -49,6 +57,10 @@ func main() {
 	}
 	defer outputLoggerFile.Close()
 
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "*",
+		AllowHeaders: "Origin, Content-Type, Accept",
+	}))
 	app.Use(logger.New(logger.Config{
 		Format:     "${time}: ${ip} - ${status} - ${method} ${path}\n",
 		TimeFormat: time.RFC3339,
@@ -56,17 +68,21 @@ func main() {
 		Output:     outputLoggerFile,
 	}))
 
-	app.Get("/", controller.DefaultController)
+	app.Post("/auth", controller.Authentication)
 
-	postGroup := app.Group("/post")
+	jwtMiddlware := jwtware.New(jwtware.Config{
+		SigningMethod: "RS256",
+		SigningKey:    controller.JWTPrivateKey.Public()})
+
+	postGroup := app.Group("/post").Use(jwtMiddlware)
 	postGroup.Post("/create", controller.CreatePostController)
 	postGroup.Get("/listing", controller.ListingGetController)
 	postGroup.Get("/:slug", controller.SlugGetController)
 
-	filesGroup := app.Group("/files")
+	filesGroup := app.Group("/files").Use(jwtMiddlware)
 	filesGroup.Post("/image/upload", controller.UploadImagePostController)
 
-	app.Get("/metrics", monitor.New(monitor.Config{Title: "Metrics Page"}))
+	app.Get("/metrics", monitor.New(monitor.Config{Title: "Metrics Page"})).Use(jwtMiddlware)
 
 	err = app.Listen(fmt.Sprintf("%s:%s", os.Getenv("APPLICATION_HOST"), os.Getenv("APPLICATION_PORT")))
 	if err != nil {
