@@ -42,8 +42,9 @@ func main() {
 	database.DatabaseConnection.AutoMigrate(
 		&model.Post{},
 		&model.Section{},
-		&model.HtmlSection{},
+		&model.TextSection{},
 		&model.FileUploaded{},
+		&model.FileSection{},
 		&model.Category{})
 
 	app := fiber.New()

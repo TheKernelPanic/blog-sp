@@ -14,9 +14,16 @@ type SectionType interface {
 type Section struct {
 	Mimetype string `json:"mimetype"`
 	Sort     int    `json:"sort"`
+	Type     string `json:"type"`
 }
 
-type HtmlSection struct {
+type FileSection struct {
+	Section
+	FileUploadedID string       `json:"file_uploaded_id,omitempty"`
+	FileUploaded   FileUploaded `json:"file_uploaded"`
+}
+
+type TextSection struct {
 	Section
 	Content string `json:"content"`
 }
@@ -45,9 +52,13 @@ func (p *Post) UnmarshalJSON(b []byte) error {
 		}
 
 		var sectionType SectionType
-		switch section.Mimetype {
-		case model.MimeTypeHtml:
-			sectionType = &HtmlSection{}
+		switch section.Type {
+		case model.TextType:
+			sectionType = &TextSection{}
+			break
+		case model.FileType:
+			sectionType = &FileSection{}
+			break
 		default:
 			return errors.New(fmt.Sprintf("Unsupported mimetype %s", section.Mimetype))
 		}
@@ -89,18 +100,32 @@ func PostModelMapper(postModel model.Post) Post {
 		return post
 	}
 	for _, sectionModel = range postModel.Sections {
+		var section SectionType
 		switch sectionType := sectionModel.SectionType.(type) {
-		case *model.HtmlSection:
-			section := HtmlSection{
+		case *model.TextSection:
+			section = TextSection{
 				Content: sectionType.Content,
 				Section: Section{
 					Mimetype: sectionType.Section.Mimetype,
+					Type:     sectionType.Section.Type,
 					Sort:     sectionType.Section.Sort}}
 
-			post.Sections = append(post.Sections, section)
+			break
+		case *model.FileSection:
+			section = FileSection{
+				FileUploaded: FileUploaded{
+					ID:       sectionType.FileUploaded.ID,
+					Filename: sectionType.FileUploaded.Filename,
+					Type:     sectionType.FileUploaded.Type},
+				Section: Section{
+					Mimetype: sectionType.Section.Mimetype,
+					Type:     sectionType.Section.Type,
+					Sort:     sectionType.Section.Sort}}
+			break
 		default:
-			// TODO: Handle
+			panic("Unsupported section type")
 		}
+		post.Sections = append(post.Sections, section)
 	}
 	return post
 }

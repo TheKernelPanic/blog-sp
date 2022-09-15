@@ -61,7 +61,7 @@ func UploadImagePostController(context *fiber.Ctx) error {
 	}
 	err = transaction.Commit().Error
 	if err != nil {
-
+		panic(err)
 	}
 	err = context.SendStatus(201)
 	if err != nil {

@@ -30,7 +30,7 @@ func TestUnmarshalJSONWithHtmlSection(t *testing.T) {
 
 	for _, sectionDto := range postDto.Sections {
 		switch sectionType := sectionDto.(type) {
-		case *dto.HtmlSection:
+		case *dto.TextSection:
 			assert.Equal(t, sectionContent, sectionType.Content)
 			assert.Equal(t, 1, sectionType.Sort)
 		default:

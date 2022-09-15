@@ -12,7 +12,7 @@ func CreatePostController(context *fiber.Ctx) error {
 
 	var postDto dto.Post
 	var postModel model.Post
-	var sectionsModel []model.SectionType
+	var sectionsModel []model.TypeSection
 
 	err := json.Unmarshal(context.Body(), &postDto)
 	if err != nil {
@@ -25,14 +25,32 @@ func CreatePostController(context *fiber.Ctx) error {
 	postModel = model.Post{Description: postDto.Description, Slug: postDto.Slug, Sections: []model.Section{}}
 	for _, sectionDto := range postDto.Sections {
 		switch sectionType := sectionDto.(type) {
-		case *dto.HtmlSection:
+		case *dto.FileSection:
 			sectionsModel = append(
 				sectionsModel,
-				&model.HtmlSection{
-					Content: sectionType.Content,
+				&model.FileSection{
+					FileUploadedID: sectionType.FileUploadedID,
 					Section: model.Section{
+						Type:     sectionType.Type,
 						Mimetype: sectionType.Mimetype,
 						Sort:     sectionType.Sort}})
+			break
+		case *dto.TextSection:
+			sectionsModel = append(
+				sectionsModel,
+				&model.TextSection{
+					Content: sectionType.Content,
+					Section: model.Section{
+						Type:     sectionType.Type,
+						Mimetype: sectionType.Mimetype,
+						Sort:     sectionType.Sort}})
+			break
+		default:
+			err = context.SendStatus(400)
+			if err != nil {
+				panic(err)
+			}
+			return context.Send(nil)
 		}
 	}
 
@@ -55,8 +73,13 @@ func CreatePostController(context *fiber.Ctx) error {
 		section = sectionModel.GetSection()
 		section.PostID = postModel.ID
 
+		// TODO: Refactor
 		switch sectionType := sectionModel.(type) {
-		case *model.HtmlSection:
+		case *model.TextSection:
+			transaction.Create(&section)
+			sectionType.ID = section.ID
+			transaction.Create(&sectionType)
+		case *model.FileSection:
 			transaction.Create(&section)
 			sectionType.ID = section.ID
 			transaction.Create(&sectionType)
@@ -106,12 +129,12 @@ func SlugGetController(context *fiber.Ctx) error {
 
 	for index, section := range post.Sections {
 
-		var sectionType model.SectionType
+		var sectionType model.TypeSection
 
-		switch section.Mimetype {
-		case model.MimeTypeHtml:
-			var htmlSectionType *model.HtmlSection
-			result = database.DatabaseConnection.Model(&model.HtmlSection{}).First(&htmlSectionType, "id = ?", section.ID)
+		switch section.Type {
+		case model.TextType:
+			var textSectionType *model.TextSection
+			result = database.DatabaseConnection.Model(&model.TextSection{}).First(&textSectionType, "id = ?", section.ID)
 			if result.RowsAffected == 0 {
 				err := context.SendStatus(404)
 				if err != nil {
@@ -119,7 +142,19 @@ func SlugGetController(context *fiber.Ctx) error {
 				}
 				return context.Send(nil)
 			}
-			sectionType = htmlSectionType
+			sectionType = textSectionType
+			break
+		case model.FileType:
+			var fileSectionType *model.FileSection
+			result = database.DatabaseConnection.Model(&model.FileSection{}).Preload("FileUploaded").First(&fileSectionType, "id = ?", section.ID)
+			if result.RowsAffected == 0 {
+				err := context.SendStatus(404)
+				if err != nil {
+					panic(err)
+				}
+				return context.Send(nil)
+			}
+			sectionType = fileSectionType
 			break
 		default:
 			// TODO: Handle
