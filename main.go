@@ -71,19 +71,19 @@ func main() {
 
 	app.Post("/auth", controller.Authentication)
 
-	jwtMiddlware := jwtware.New(jwtware.Config{
+	jwtMiddleware := jwtware.New(jwtware.Config{
 		SigningMethod: "RS256",
 		SigningKey:    controller.JWTPrivateKey.Public()})
 
-	postGroup := app.Group("/post").Use(jwtMiddlware)
+	postGroup := app.Group("/post").Use(jwtMiddleware)
 	postGroup.Post("/create", controller.CreatePostController)
 	postGroup.Get("/listing", controller.ListingGetController)
 	postGroup.Get("/:slug", controller.SlugGetController)
 
-	filesGroup := app.Group("/files").Use(jwtMiddlware)
+	filesGroup := app.Group("/files").Use(jwtMiddleware)
 	filesGroup.Post("/image/upload", controller.UploadImagePostController)
 
-	app.Get("/metrics", monitor.New(monitor.Config{Title: "Metrics Page"})).Use(jwtMiddlware)
+	app.Get("/metrics", monitor.New(monitor.Config{Title: "Metrics Page"})).Use(jwtMiddleware)
 
 	err = app.Listen(fmt.Sprintf("%s:%s", os.Getenv("APPLICATION_HOST"), os.Getenv("APPLICATION_PORT")))
 	if err != nil {
